@@ -35,7 +35,7 @@ void Neo_NapTime(uint32_t ColorValue) {
 }
 
 void Neo_CircleTime(uint32_t ColorValue) {
-  for (int i = 0; i < 14; i++) {
+  for (int i = 0; i <= 14; i++) {
     leds[i + 85] = CRGB(ColorValue);
   }
 }

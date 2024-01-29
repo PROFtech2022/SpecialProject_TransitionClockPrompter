@@ -11,19 +11,14 @@
 */
 #include <Stepper.h>
 #include <FastLED.h>
+#include "LEDdriver.h"
+#include "Variables.h"
 
 #define LED_DataPin 7
 #define Num_LED 114
 
-#define HEpin A0  //Hall Effect Sensor Pin
-
-const int stepsPerRevolution = 32;
-
-Stepper myStepper(stepsPerRevolution, 2, 3, 4, 5);
-
-CRGB leds[Num_LED];
-
-uint32_t last_millis = 0;
+#define HEpin A0      //Hall Effect Sensor Pin
+#define BuzzerPin A1  //Buzzer Pin
 
 #define Color_ArrivalTime 0xff0000
 #define Color_MeetingTime 0xff4400
@@ -34,16 +29,35 @@ uint32_t last_millis = 0;
 #define Color_CircleTime 0xff00ff
 #define Color_GoodbyeTime 0x6600ff
 
+const int stepsPerRevolution = 32;
+const int stepSPEED=60;
+Stepper myStepper(stepsPerRevolution, 2, 3, 4, 5);
+
+CRGB leds[Num_LED];
+
+LEDdriver LEDseg;
+
 void setup() {
   Serial.begin(115200);
   Serial.println("Transition Clock Prompter \nSYSTEM STARTING...");
   //myStepper.step(stepsPerRevolution);
   delay(1000);
 
+  interrupt_setup();
+
+  LEDseg.begin(8, 9, 10);
+  LEDseg.printByte(188);
+  LEDseg.printByte(188);
+  LEDseg.latchData();
+
+
+
+
   FastLED.addLeds<WS2812, LED_DataPin, RGB>(leds, Num_LED);
   FastLED.setBrightness(90);
   FastLED.clear();
   FastLED.show();
+
 
   NeoRain_ArrivalTime(Color_ArrivalTime);
   NeoRain_MeetingTime(Color_MeetingTime);
@@ -55,29 +69,58 @@ void setup() {
   NeoRain_GoodbyeTime(Color_GoodbyeTime);
   delay(1000);
 
+
   FastLED.clear();
   FastLED.show();
 
 
-
   pinMode(HEpin, INPUT);
+  pinMode(BuzzerPin, OUTPUT);
+
+  CalibrationMode = true;
   ArrowHand_Calibrate();
+  CalibrationMode = false;
+  LEDseg.printByte(15);
+  LEDseg.printOneDigit(100);
+  LEDseg.printOneDigit(100);
+  LEDseg.latchData();
+
+  promptTime_initialize();
+
+  currentPT_Minute = pTime_Minute[p_ArrivalTime];
+  currentPT_Second = pTime_Second[p_ArrivalTime];
+  CurrentPT_Started = true;
+
+  Serial.println("currentPT_Minute: " + String(currentPT_Minute));
+  Serial.println("currentPT_Second: " + String(currentPT_Second));
+  myStepper.setSpeed(stepSPEED);
+  NeoRain_ArrivalTime(Color_ArrivalTime);
 }
 
 void loop() {
   //myStepper.step(stepsPerRevolution);
+  display_CurrentPromptTime();
+  if(step_counter>=200){
+      myStepper.step(stepsPerRevolution);
+      delay(250);
+      step_counter=0;
+  }
+
 }
 
 
 void ArrowHand_Calibrate() {
-  myStepper.setSpeed(60);
+  myStepper.setSpeed(stepSPEED);
   last_millis = millis();
   while (digitalRead(HEpin)) {
+    if (!digitalRead(HEpin)) {
+      goto alignExit;
+    }
     myStepper.step(stepsPerRevolution);
-    Serial.println("Hall Effect:" + String(digitalRead(HEpin)));
+    //Serial.println("IR Sensor:" + String(digitalRead(HEpin)));
+    LEDseg_Calibration();
   }
-  myStepper.step(stepsPerRevolution);
-  delay(2000);
+alignExit:
   Serial.println("Time Elapsed:" + String(millis() - last_millis));
 
   FastLED.clear();
@@ -123,10 +166,8 @@ void ArrowHand_Calibrate() {
       FastLED.show();
     }
   }
-
-
   myStepper.step(stepsPerRevolution);
-  delay(2000);
+  delay(100);
   FastLED.clear();
   FastLED.show();
   Serial.println("Time Elapsed:" + String(millis() - last_millis));
