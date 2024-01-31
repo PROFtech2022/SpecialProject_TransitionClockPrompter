@@ -51,4 +51,17 @@ void PT_VariableControl() {
     currentPT_Second = 59;
     currentPT_Minute--;
   }
+
+  if (currentPT_Minute == 0 && currentPT_Second == 0 && !BuzzToggle) {
+
+    LEDseg.printNum(255);
+    LEDseg.printNum(100);
+    LEDseg.printNum(100);
+    LEDseg.printNum(100);
+
+    LEDseg.latchData();
+    Buzz(3000);
+    CurrentPT_Started = false;
+    BuzzToggle = true;
+  }
 }

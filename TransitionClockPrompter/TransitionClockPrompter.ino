@@ -29,13 +29,15 @@
 #define Color_CircleTime 0xff00ff
 #define Color_GoodbyeTime 0x6600ff
 
-const int stepsPerRevolution = 32;
-const int stepSPEED=60;
+const int stepsPerRevolution = 200;
+const int stepSPEED = 60;
 Stepper myStepper(stepsPerRevolution, 2, 3, 4, 5);
 
 CRGB leds[Num_LED];
 
 LEDdriver LEDseg;
+
+int stepCount = 0;  // number of steps the motor has taken
 
 void setup() {
   Serial.begin(115200);
@@ -54,7 +56,7 @@ void setup() {
 
 
   FastLED.addLeds<WS2812, LED_DataPin, RGB>(leds, Num_LED);
-  FastLED.setBrightness(90);
+  FastLED.setBrightness(95);
   FastLED.clear();
   FastLED.show();
 
@@ -76,6 +78,7 @@ void setup() {
 
   pinMode(HEpin, INPUT);
   pinMode(BuzzerPin, OUTPUT);
+  Buzz(1000);
 
   CalibrationMode = true;
   ArrowHand_Calibrate();
@@ -94,81 +97,44 @@ void setup() {
   Serial.println("currentPT_Minute: " + String(currentPT_Minute));
   Serial.println("currentPT_Second: " + String(currentPT_Second));
   myStepper.setSpeed(stepSPEED);
+  for (int i = 0; i < 11; i++) {
+    myStepper.step(1);
+  }
+
   NeoRain_ArrivalTime(Color_ArrivalTime);
 }
 
 void loop() {
   //myStepper.step(stepsPerRevolution);
   display_CurrentPromptTime();
-  if(step_counter>=200){
-      myStepper.step(stepsPerRevolution);
-      delay(250);
-      step_counter=0;
+  if (step_counter >= 10) {
+    myStepper.step(1);
+    step_counter = 0;
   }
-
 }
 
 
 void ArrowHand_Calibrate() {
   myStepper.setSpeed(stepSPEED);
   last_millis = millis();
+
   while (digitalRead(HEpin)) {
-    if (!digitalRead(HEpin)) {
-      goto alignExit;
-    }
-    myStepper.step(stepsPerRevolution);
+    myStepper.step(1);
+    Serial.print("steps:");
+    Serial.println(stepCount);
+    stepCount++;
     //Serial.println("IR Sensor:" + String(digitalRead(HEpin)));
     LEDseg_Calibration();
   }
-alignExit:
+
   Serial.println("Time Elapsed:" + String(millis() - last_millis));
-
-  FastLED.clear();
-  Neo_ArrivalTime(Color_ArrivalTime);
-  FastLED.show();
-
   Serial.println("STEPPER & NeoPixel Test");
-
-  uint32_t millis_diff;
-  last_millis = millis();
-
-  while (digitalRead(HEpin)) {
-    myStepper.step(stepsPerRevolution);
-    Serial.println("TE:" + String(millis() - last_millis));
-    millis_diff = millis() - last_millis;
-    if (millis_diff > 4500 && millis_diff < 11800) {
-      FastLED.clear();
-      Neo_MeetingTime(Color_MeetingTime);
-      FastLED.show();
-    } else if (millis_diff > 11800 && millis_diff < 19500) {
-      FastLED.clear();
-      Neo_StoryTime(Color_StoryTime);
-      FastLED.show();
-    } else if (millis_diff > 19500 && millis_diff < 33000) {
-      FastLED.clear();
-      Neo_ActivityTime(Color_ActivityTime);
-      FastLED.show();
-    } else if (millis_diff > 33000 && millis_diff < 41000) {
-      FastLED.clear();
-      Neo_IndoorOutdoorTime(Color_IndoorOutdoorTime);
-      FastLED.show();
-    } else if (millis_diff > 41000 && millis_diff < 53000) {
-      FastLED.clear();
-      Neo_NapTime(Color_NapTime);
-      FastLED.show();
-    } else if (millis_diff > 53000 && millis_diff < 60000) {
-      FastLED.clear();
-      Neo_CircleTime(Color_CircleTime);
-      FastLED.show();
-    } else if (millis_diff > 60000) {
-      FastLED.clear();
-      Neo_GoodbyeTime(Color_GoodbyeTime);
-      FastLED.show();
-    }
-  }
-  myStepper.step(stepsPerRevolution);
-  delay(100);
   FastLED.clear();
   FastLED.show();
-  Serial.println("Time Elapsed:" + String(millis() - last_millis));
+}
+
+void Buzz(uint32_t buzzDelay) {
+  digitalWrite(BuzzerPin, 1);
+  delay(buzzDelay);
+  digitalWrite(BuzzerPin, 0);
 }

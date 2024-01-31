@@ -29,3 +29,9 @@ uint8_t currentPT_Second=0;
 
 bool stepper_stepped=false;
 uint8_t step_counter=0;
+
+bool arrow90Detected=false;
+
+bool BuzzToggle=false;
+
+uint32_t arrowHeadCounter=0;
