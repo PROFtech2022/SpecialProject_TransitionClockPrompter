@@ -17,9 +17,13 @@ bool LEDseg_CalibToggle = false;
 #define p_GoodbyeTime 0x07
 
 
+#define p_Minute true
+#define p_Second false
 
-uint8_t pTime_Minute[8];
-uint8_t pTime_Second[8];
+
+
+//uint8_t pTime_Minute[8];
+//uint8_t pTime_Second[8];
 
 bool CurrentPT_Started=false;
 uint32_t CurrentPT_IntCounter=0;
@@ -35,3 +39,5 @@ bool arrow90Detected=false;
 bool BuzzToggle=false;
 
 uint32_t arrowHeadCounter=0;
+
+uint8_t pt_currentPrompt=0;

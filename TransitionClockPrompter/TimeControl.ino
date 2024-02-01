@@ -1,4 +1,4 @@
-
+/*
 void promptTime_initialize() {
   pTime_Minute[p_ArrivalTime] = 15;  // Arrival Time
   pTime_Second[p_ArrivalTime] = 0;   // Arrival Time
@@ -24,7 +24,7 @@ void promptTime_initialize() {
   pTime_Minute[p_GoodbyeTime] = 10;  // Goodbye Time
   pTime_Second[p_GoodbyeTime] = 0;   // Goodbye Time
 }
-
+*/
 
 void display_CurrentPromptTime() {
   PT_VariableControl();
@@ -63,5 +63,43 @@ void PT_VariableControl() {
     Buzz(3000);
     CurrentPT_Started = false;
     BuzzToggle = true;
+  }
+
+}
+
+uint8_t PT_getNewTime(bool currentPT_MinSec, uint8_t CurrentPrompt) {
+  if (currentPT_MinSec) {
+    switch (CurrentPrompt) {
+      case p_ArrivalTime:
+        return 15;
+        break;
+      case p_MeetingTime:
+        return 20;
+        break;
+      case p_StoryTime:
+        return 20;
+        break;
+      case p_ActivityTime:
+        return 30;
+        break;
+      case p_IndoorOutdoorTime:
+        return 20;
+        break;
+      case p_NapTime:
+        return 30;
+        break;
+      case p_CircleTime:
+        return 20;
+        break;
+      case p_GoodbyeTime:
+        return 10;
+        break;
+      default:
+      CurrentPrompt=0;
+        return 15;
+        break;
+    }
+  }else{
+    return 0;
   }
 }

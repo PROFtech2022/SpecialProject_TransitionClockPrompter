@@ -88,16 +88,17 @@ void setup() {
   LEDseg.printOneDigit(100);
   LEDseg.latchData();
 
-  promptTime_initialize();
+  //promptTime_initialize();
 
-  currentPT_Minute = pTime_Minute[p_ArrivalTime];
-  currentPT_Second = pTime_Second[p_ArrivalTime];
+  pt_currentPrompt = 0;
+  currentPT_Minute = PT_getNewTime(p_Minute, pt_currentPrompt);
+  currentPT_Second = PT_getNewTime(p_Second, pt_currentPrompt);
   CurrentPT_Started = true;
 
   Serial.println("currentPT_Minute: " + String(currentPT_Minute));
   Serial.println("currentPT_Second: " + String(currentPT_Second));
   myStepper.setSpeed(stepSPEED);
-  for (int i = 0; i < 11; i++) {
+  for (int i = 0; i < 9; i++) {
     myStepper.step(1);
   }
 
@@ -107,9 +108,28 @@ void setup() {
 void loop() {
   //myStepper.step(stepsPerRevolution);
   display_CurrentPromptTime();
-  if (step_counter >= 10) {
-    myStepper.step(1);
-    step_counter = 0;
+
+
+  if (pt_currentPrompt == p_ArrivalTime || pt_currentPrompt == p_IndoorOutdoorTime) {
+    if (step_counter >= 10) {
+      myStepper.step(1);
+      step_counter = 0;
+    }
+  } else if (pt_currentPrompt == p_ActivityTime) {
+    if (step_counter >= 8) {
+      myStepper.step(1);
+      step_counter = 0;
+    }
+  } else {
+    if (step_counter >= 11) {
+      myStepper.step(1);
+      step_counter = 0;
+    }
+  }
+
+
+  if (BuzzToggle) {
+    getNewPrompt();
   }
 }
 
@@ -137,4 +157,83 @@ void Buzz(uint32_t buzzDelay) {
   digitalWrite(BuzzerPin, 1);
   delay(buzzDelay);
   digitalWrite(BuzzerPin, 0);
+}
+
+void getNewPrompt() {
+  pt_currentPrompt++;
+
+  currentPT_Minute = PT_getNewTime(p_Minute, pt_currentPrompt);
+  currentPT_Second = PT_getNewTime(p_Second, pt_currentPrompt);
+  CurrentPT_Started = true;
+  BuzzToggle = false;
+
+
+  if (currentPT_Minute < 10) {
+    LEDseg.printNum(255);
+    LEDseg.printNum(currentPT_Minute);
+  } else {
+    LEDseg.printNum(currentPT_Minute / 10);
+    LEDseg.printNum(currentPT_Minute % 10);
+  }
+
+
+  LEDseg.printNum((currentPT_Second / 10) + 100);
+  LEDseg.printNum((currentPT_Second % 10) + 100);
+
+  LEDseg.latchData();
+
+  FastLED.clear();
+  FastLED.show();
+
+  switch (pt_currentPrompt) {
+    case p_ArrivalTime:
+      NeoRain_ArrivalTime(Color_ArrivalTime);
+      break;
+    case p_MeetingTime:
+      NeoRain_MeetingTime(Color_MeetingTime);
+      break;
+    case p_StoryTime:
+      NeoRain_StoryTime(Color_StoryTime);
+      break;
+    case p_ActivityTime:
+      NeoRain_ActivityTime(Color_ActivityTime);
+      break;
+    case p_IndoorOutdoorTime:
+      NeoRain_IndoorOutdoorTime(Color_IndoorOutdoorTime);
+      break;
+    case p_NapTime:
+      NeoRain_NapTime(Color_NapTime);
+      break;
+    case p_CircleTime:
+      NeoRain_CircleTime(Color_CircleTime);
+      break;
+    case p_GoodbyeTime:
+      NeoRain_GoodbyeTime(Color_GoodbyeTime);
+      break;
+    default:
+      pt_currentPrompt = 0;
+      break;
+  }
+
+  FastLED.show();
+
+  for (int i = 0; i < 5; i++) {
+    myStepper.step(1);
+  }
+
+  if (pt_currentPrompt == p_MeetingTime) {
+    for (int i = 0; i < 15; i++) {
+      myStepper.step(1);
+    }
+  } else if (pt_currentPrompt == p_StoryTime) {
+    for (int i = 0; i < 20; i++) {
+      myStepper.step(1);
+    }
+  } else if (pt_currentPrompt == p_ActivityTime) {
+    for (int i = 0; i < 30; i++) {
+      myStepper.step(1);
+    }
+  }
+
+  delay(3000);
 }

@@ -56,13 +56,13 @@ ISR(TIMER2_COMPA_vect) {
 
   if (CurrentPT_Started) {
     CurrentPT_IntCounter++;
-    if (CurrentPT_IntCounter >= 800) {
+    if (CurrentPT_IntCounter >= 8000) {
       CurrentPT_IntCounter = 0;
       currentPT_Second--;
     }
 
     arrowHeadCounter++;
-    if (arrowHeadCounter >= 400) {
+    if (arrowHeadCounter >= 4000) {
       step_counter++;
       arrowHeadCounter = 0;
     }
